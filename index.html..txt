@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Image to Video Converter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #007bff; margin-bottom: 20px; }
+        input[type="file"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        button:hover { background-color: #218838; }
+        button:disabled { background-color: #6c757d; }
+        #status { margin-top: 15px; font-weight: bold; color: #555; }
+        video { margin-top: 20px; width: 100%; border-radius: 6px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Image to Video</h1>
+    <p>Convert a single photo into a 5-second video clip completely free.</p>
+    
+    <label>Choose an Image:</label>
+    <input type="file" id="imageInput" accept="image/*">
+    
+    <button id="convertBtn">Generate Video</button>
+    
+    <div id="status"></div>
+    <video id="resultVideo" controls></video>
+</div>
+
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const status = document.getElementById('status');
+    const resultVideo = document.getElementById('resultVideo');
+
+    convertBtn.addEventListener('click', async () => {
+        const file = imageInput.files[0];
+        if (!file) {
+            alert('Please select an image first!');
+            return;
+        }
+
+        convertBtn.disabled = true;
+        status.innerText = "Processing image...";
+
+        // 1. Load image into an HTML Image Object
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        
+        img.onload = function() {
+            status.innerText = "Generating video frames...";
+            
+            // 2. Set up a hidden Canvas (the drawing board)
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set video size to standard 720p HD
+            canvas.width = 1280;
+            canvas.height = 720;
+
+            // 3. Set up the Canvas Recorder (captures the video stream)
+            const stream = canvas.captureStream(30); // 30 frames per second
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                // 5. Video is done! Create a link to play/download it
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const videoURL = URL.createObjectURL(blob);
+                
+                resultVideo.src = videoURL;
+                resultVideo.style.display = 'block';
+                status.innerText = "Done! Right-click the video to save it.";
+                convertBtn.disabled = false;
+            };
+
+            // Start recording
+            mediaRecorder.start();
+
+            // 4. Draw the image onto the canvas repeatedly over 5 seconds
+            let framesCount = 0;
+            const totalFrames = 30 * 5; // 30 FPS * 5 Seconds = 150 frames total
+
+            function drawFrame() {
+                // Clear canvas and draw background
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw the user's image, scaling it to fit the screen nicely
+                const hRatio = canvas.width / img.width;
+                const vRatio = canvas.height / img.height;
+                const ratio  = Math.min(hRatio, vRatio);
+                const shiftX = (canvas.width - img.width * ratio) / 2;
+                const shiftY = (canvas.height - img.height * ratio) / 2;  
+                
+                ctx.drawImage(img, 0, 0, img.width, img.height, shiftX, shiftY, img.width * ratio, img.height * ratio);
+
+                framesCount++;
+
+                if (framesCount < totalFrames) {
+                    requestAnimationFrame(drawFrame);
+                } else {
+                    // Stop recording after 5 seconds
+                    mediaRecorder.stop();
+                }
+            }
+
+            drawFrame();
+        };
+    });
+</script>
+
+</body>
+</html>
