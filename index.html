@@ -1,42 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI Video Generator</title>
+    <title>Image To Video Generator</title>
 </head>
 <body>
 
-    <h1>AI Video Generator</h1>
+<h1>Image To Video Generator</h1>
 
-    <textarea
-        id="prompt"
-        rows="5"
-        cols="50"
-        placeholder="Describe your video here">
-    </textarea>
+<input type="file" id="images" multiple accept="image/*">
 
-    <br><br>
+<br><br>
 
-    <select id="ratio">
-        <option>16:9</option>
-        <option>9:16</option>
-        <option>1:1</option>
-    </select>
+<select id="duration">
+    <option value="3">3 Seconds</option>
+    <option value="5">5 Seconds</option>
+    <option value="10">10 Seconds</option>
+</select>
 
-    <select id="duration">
-        <option>3 Seconds</option>
-        <option>5 Seconds</option>
-        <option>8 Seconds</option>
-    </select>
+<br><br>
 
-    <br><br>
+<button id="generateBtn">
+Generate Video
+</button>
 
-    <button id="generateBtn">
-        Generate Video
-    </button>
+<br><br>
 
-    <br><br>
-
-    <video id="video" controls width="500"></video>
+<video id="video" controls width="500"></video>
 
 </body>
 </html>
