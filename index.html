@@ -1,188 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced AI Video Generator</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-        }
-        .container {
-            background: #1e293b;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            max-width: 550px;
-            width: 100%;
-            text-align: center;
-        }
-        h1 { color: #38bdf8; margin-bottom: 10px; }
-        p { color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
-        textarea {
-            width: 100%;
-            height: 100px;
-            padding: 12px;
-            background: #334155;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: none;
-            margin-bottom: 15px;
-        }
-        .settings-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .setting-group {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .setting-group label {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        select {
-            padding: 10px;
-            background: #334155;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button {
-            background-color: #38bdf8;
-            color: #0f172a;
-            border: none;
-            padding: 14px 20px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        button:hover { background-color: #7dd3fc; }
-        button:disabled { background-color: #64748b; cursor: not-allowed; color: #cbd5e1; }
-        #status { margin-top: 20px; font-weight: bold; color: #38bdf8; line-height: 1.4; }
-        video { margin-top: 25px; width: 100%; border-radius: 6px; display: none; border: 2px solid #475569; }
-    </style>
+    <title>AI Video Generator</title>
 </head>
 <body>
 
-<div class="container">
     <h1>AI Video Generator</h1>
-    <p>Customize your settings and type a prompt to generate a free AI video clip.</p>
-    
-    <textarea id="promptInput" placeholder="Describe the video you want to see... (e.g., 'A soaring eagle over snow-capped mountains')"></textarea>
-    
-    <!-- New Settings Layout Row -->
-    <div class="settings-row">
-        <div class="setting-group">
-            <label for="aspectRatio">Frame Size (Aspect Ratio)</label>
-            <select id="aspectRatio">
-                <option value="square (1:1)">Square (1:1) - Social Posts</option>
-                <option value="widescreen (16:9)">Widescreen (16:9) - YouTube</option>
-                <option value="vertical (9:16)">Vertical (9:16) - Shorts/TikTok</option>
-            </select>
-        </div>
-        
-        <div class="setting-group">
-            <label for="videoLength">Video Length</label>
-            <select id="videoLength">
-                <option value="short 3-second loop">Short (3 seconds)</option>
-                <option value="standard 5-second cinematic clip">Standard (5 seconds)</option>
-                <option value="extended 8-second slow motion clip">Extended (8 seconds)</option>
-            </select>
-        </div>
-    </div>
-    
-    <button id="generateBtn">Generate AI Video</button>
-    
-    <div id="status"></div>
-    <video id="resultVideo" controls autoplay loop></video>
-</div>
 
-<script>
-    const promptInput = document.getElementById('promptInput');
-    const aspectRatioSelect = document.getElementById('aspectRatio');
-    const videoLengthSelect = document.getElementById('videoLength');
-    const generateBtn = document.getElementById('generateBtn');
-    const status = document.getElementById('status');
-    const resultVideo = document.getElementById('resultVideo');
+    <textarea
+        id="prompt"
+        rows="5"
+        cols="50"
+        placeholder="Describe your video here">
+    </textarea>
 
-    // ⚠️ REPLACE THIS STRING WITH YOUR ACTUAL HUGGING FACE TOKEN
-    const HF_TOKEN = "PASTE_YOUR_HUGGING_FACE_TOKEN_HERE"; 
+    <br><br>
 
-    const MODEL_URL = "https://api-inference.huggingface.co/models/ByteDance/AnimateDiff";
+    <select id="ratio">
+        <option>16:9</option>
+        <option>9:16</option>
+        <option>1:1</option>
+    </select>
 
-    generateBtn.addEventListener('click', async () => {
-        const basePrompt = promptInput.value.trim();
-        if (!basePrompt) {
-            alert('Please type a description first!');
-            return;
-        }
+    <select id="duration">
+        <option>3 Seconds</option>
+        <option>5 Seconds</option>
+        <option>8 Seconds</option>
+    </select>
 
-        // Get values from the new dropdown selectors
-        const selectedSize = aspectRatioSelect.value;
-        const selectedLength = videoLengthSelect.value;
+    <br><br>
 
-        // Combine inputs into a single ultimate instruction string for the AI model
-        const finalPrompt = `${basePrompt}, ${selectedSize}, ${selectedLength}, high quality, smooth movement`;
+    <button id="generateBtn">
+        Generate Video
+    </button>
 
-        generateBtn.disabled = true;
-        resultVideo.style.display = 'none';
-        status.innerText = "Connecting to AI Server and applying configurations...";
+    <br><br>
 
-        try {
-            const response = await fetch(MODEL_URL, {
-                headers: { 
-                    Authorization: `Bearer ${HF_TOKEN}`,
-                    "Content-Type": "application/json"
-                },
-                method: "POST",
-                body: JSON.stringify({ inputs: finalPrompt }),
-            });
-
-            if (response.status === 503) {
-                status.innerText = "AI Server is waking up. Retrying automatically in 10 seconds...";
-                setTimeout(() => generateBtn.click(), 10000);
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error("AI Server ran into an issue processing your request.");
-            }
-
-            const videoBlob = await response.blob();
-            const videoURL = URL.createObjectURL(videoBlob);
-            
-            resultVideo.src = videoURL;
-            resultVideo.style.display = 'block';
-            status.innerText = "Video generated successfully! 🎉";
-        } catch (error) {
-            console.error(error);
-            status.innerText = "Error: Failed to generate video. Please try again.";
-        } finally {
-            generateBtn.disabled = false;
-        }
-    });
-</script>
+    <video id="video" controls width="500"></video>
 
 </body>
 </html>
